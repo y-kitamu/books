@@ -1,0 +1,4 @@
+clang
+-I/home/kitamura/work/Learning/Book/MikanOS/edk2/MdePkg/Include
+-I/home/kitamura/work/Learning/Book/MikanOS/edk2/MdePkg/Include/X64
+-I/home/kitamura/work/Learning/Book/MikanOS/mymikanos/kernel/

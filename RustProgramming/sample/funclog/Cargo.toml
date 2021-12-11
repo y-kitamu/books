@@ -1,0 +1,12 @@
+[package]
+authors = ["Kitamura <ymyk6602@gmail.com>"]
+edition = "2018"
+name = "funclog"
+version = "0.1.0"
+
+[dependencies]
+quote = "*"
+syn = {version = "1.0.25", features = ["full"]}
+
+[lib]
+proc-macro = true

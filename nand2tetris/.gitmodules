@@ -1,0 +1,12 @@
+[submodule "ext/fmt"]
+	path = ext/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "ext/argparse"]
+	path = ext/argparse
+	url = https://github.com/p-ranav/argparse.git
+[submodule "ext/glog"]
+	path = ext/glog
+	url = https://github.com/google/glog.git
+[submodule "ext/gperftools"]
+	path = ext/gperftools
+	url = https://github.com/gperftools/gperftools.git

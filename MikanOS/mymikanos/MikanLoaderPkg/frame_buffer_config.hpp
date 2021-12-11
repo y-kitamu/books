@@ -1,0 +1,1 @@
+/home/kitamura/work/Learning/Book/MikanOS/mymikanos/kernel/frame_buffer_config.hpp

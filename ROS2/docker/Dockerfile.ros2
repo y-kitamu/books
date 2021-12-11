@@ -1,0 +1,72 @@
+FROM nvidia/cudagl:11.4.2-devel
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install curl gnupg lsb-release software-properties-common -y
+RUN add-apt-repository universe && apt-get update
+
+# ssh (https://docs.docker.com/engine/examples/running_ssh_service/)
+RUN apt-get update && apt-get upgrade -y && apt-get install openssh-server -y
+RUN mkdir /var/run/sshd
+RUN sed -ri 's/^#?PermitRootLogin\s+.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -ri 's/UsePAM yes/#UsePAM yes/g' /etc/ssh/sshd_config
+
+# clang & llvm : https://apt.llvm.org
+ARG LLVM_VERSION=13
+WORKDIR /opt
+RUN apt-get update && apt-get install -y wget software-properties-common && apt-get clean all
+RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh ${LLVM_VERSION}
+
+RUN rm -f /usr/bin/clang && ln -s /usr/lib/llvm-${LLVM_VERSION}/bin/clang /usr/bin/clang &&\
+    rm -f /usr/bin/clang++ && ln -s /usr/lib/llvm-${LLVM_VERSION}/bin/clang++ /usr/bin/clang++ &&\
+    rm -f /usr/bin/lldb && ln -s /usr/bin/lldb-${LLVM_VERSION} /usr/bin/lldb &&\
+    rm -f /usr/bin/llvm-config && ln -s /usr/bin/llvm-config-${LLVM_VERSION} /usr/bin/llvm-config
+
+# ccls
+RUN apt-get install -y\
+    libllvm-${LLVM_VERSION}-ocaml-dev\
+    llvm-${LLVM_VERSION}-doc\
+    libclang-${LLVM_VERSION}-dev\
+    clang-tools-${LLVM_VERSION}\
+    clang-${LLVM_VERSION}-doc \
+    clang-format-${LLVM_VERSION}\
+    python3-clang-${LLVM_VERSION}
+RUN ln -s /usr/lib/x86_64-linux-gnu/libclang-13.so.13.0.0 /usr/lib/llvm-${LLVM_VERSION}/lib/
+WORKDIR /opt
+RUN apt-get install -y git cmake
+RUN git clone --depth=1 --recursive https://github.com/MaskRay/ccls && cd ccls &&\
+    cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ &&\
+    cmake --build Release && ln -s /opt/ccls/Release/ccls /usr/local/bin/
+
+# create user
+ARG USER
+ARG UID
+ARG GID
+RUN apt-get install sudo -y
+RUN addgroup --gid ${GID} ${USER}\
+    && useradd -m --uid ${UID} --gid ${GID} ${USER}\
+    && adduser ${USER} sudo
+
+# ROS2
+ARG ROS_DISTRO=galactic
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key\
+    -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+RUN apt-get update && apt-get install -y\
+    ros-${ROS_DISTRO}-desktop\
+    python3-colcon-common-extensions \
+    python3-rosdep\
+    python3-argcomplete
+RUN rosdep init && rosdep update
+
+
+# pyright
+RUN apt-get update && apt-get install -y npm nodejs
+RUN npm install pyright -g
+
+# update /etc/profile
+ARG DISPLAY
+RUN echo "export DISPLAY=${DISPLAY}" >> /etc/profile
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/${USER}/.profile
+
+ENV DEBIAN_FRONTEND=newt

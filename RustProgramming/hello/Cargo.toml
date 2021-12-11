@@ -1,0 +1,14 @@
+[package]
+name = "hello"
+version = "0.1.0"
+authors = ["Kitamura <ymyk6602@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cortex-m-rt = "0.6.14"
+cortex-m-semihosting = "0.3.7"
+panic-halt = "0.2.0"
+embedded-hal = "1.0.0-alpha.4"
+stm32f4xx-hal = {version="0.7.0", features=["stm32f407"]}

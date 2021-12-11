@@ -1,0 +1,13 @@
+[package]
+name = "ui_demo"
+version = "0.1.0"
+authors = ["Kitamura <ymyk6602@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+iced = { version = "0.3.0", features = ["async-std"] }
+iced_native = "0.4.0"
+iced_futures = "0.3.0"
+async-std = { version = "1.9.0", features = ["unstable"] }

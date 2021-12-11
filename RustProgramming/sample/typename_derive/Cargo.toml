@@ -1,0 +1,12 @@
+[package]
+authors = ["Kitamura <ymyk6602@gmail.com>"]
+edition = "2018"
+name = "typename_derive"
+version = "0.1.0"
+
+[dependencies]
+quote = "*"
+syn = "*"
+
+[lib]
+proc-macro = true

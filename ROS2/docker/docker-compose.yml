@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  ros2:
+    hostname: ros2_dev
+    build:
+      context: .
+      dockerfile: Dockerfile.ros2
+      args:
+        - USER=${USER}
+        - UID=${UID}
+        - GID=${GID}
+        - DISPLAY=${DISPLAY}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "2222:22"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /etc/shadow:/etc/shadow
+      - /etc/group:/etc/group
+      - /etc/passwd:/etc/passwd
+      - ../:${HOME}/work/
+      - ${HOME}/.ssh:${HOME}/.ssh
+      - ${HOME}/.bashrc:${HOME}/.bashrc
+    entrypoint: /usr/sbin/sshd -D
+    cap_add:
+      - NET_ADMIN
+    restart: always

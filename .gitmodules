@@ -1,0 +1,3 @@
+[submodule "nand2tetris/ext/googletest"]
+	path = nand2tetris/ext/googletest
+	url = https://github.com/google/googletest.git
