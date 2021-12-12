@@ -18,3 +18,7 @@ GRTAGS
 GTAGS
 *.png
 *.gif
+*.sqlite
+*.db
+*.ttf
+node_modules/
