@@ -17,16 +17,45 @@ const drawCanvas = () => {
     -0.3, -0.3, -0.3,
     0.3, -0.3, -0.3,
     0.3, 0.3, -0.3,
-      -0.3, -0.3, -0.3,
-      -0.3,  0.3, -0.3,
+    -0.3, -0.3, -0.3,
+    -0.3,  0.3, -0.3,
     0.3, 0.3, -0.3,
     // back face
-      -0.2, -0.2, 0.3,
+    -0.2, -0.2, 0.3,
     0.4, -0.2, 0.3,
     0.4, 0.4, 0.3,
-      -0.2, -0.2, 0.3,
-      -0.2, 0.4, 0.3,
+    -0.2, -0.2, 0.3,
+    -0.2, 0.4, 0.3,
     0.4, 0.4, 0.3,
+    // top face
+    -0.3, 0.3, -0.3,
+    0.3, 0.3, -0.3,
+    -0.2, 0.4,  0.3,
+    0.4, 0.4,  0.3,
+    0.3, 0.3, -0.3,
+    -0.2, 0.4,  0.3,
+  ];
+
+  // prettier-ignore
+  const squareColors = [
+    0.0,  0.0,  1.0,  1.0,
+    0.0,  0.0,  1.0,  1.0,
+    0.0,  0.0,  1.0,  1.0,
+    0.0,  0.0,  1.0,  1.0,
+    0.0,  0.0,  1.0,  1.0,
+    0.0,  0.0,  1.0,  1.0,
+    1.0,  0.0,  0.0,  1.0,
+    1.0,  0.0,  0.0,  1.0,
+    1.0,  0.0,  0.0,  1.0,
+    1.0,  0.0,  0.0,  1.0,
+    1.0,  0.0,  0.0,  1.0,
+    1.0,  0.0,  0.0,  1.0,
+    0.0,  1.0,  0.0,  1.0,
+    0.0,  1.0,  0.0,  1.0,
+    0.0,  1.0,  0.0,  1.0,
+    0.0,  1.0,  0.0,  1.0,
+    0.0,  1.0,  0.0,  1.0,
+    0.0,  1.0,  0.0,  1.0,
   ];
   /*====== Define front-face buffer ======*/
   // prepare buffer data (vbo : データをGPUのbuffer上に置く)
@@ -34,20 +63,31 @@ const drawCanvas = () => {
   gl.bindBuffer(gl.ARRAY_BUFFER, origBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squares), gl.STATIC_DRAW);
 
+  const colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(squareColors),
+    gl.STATIC_DRAW
+  );
+
   /*========== Shaders ==========*/
   /*====== Define shader source ======*/
   const vsSource = `
 attribute vec4 aPosition;
+attribute vec4 aVertexColor;
+varying lowp vec4 vColor;
 
 void main() {
 gl_Position = aPosition;
+vColor = aVertexColor;
 }
 `;
 
   const fsSource = `
-precision mediump float;
+varying lowp vec4 vColor;
 void main () {
-gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+gl_FragColor = vColor;
 }
 `;
   /*====== Create shaders ======*/
@@ -60,8 +100,25 @@ gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
   /*====== Compile shaders ======*/
   gl.shaderSource(vertexShader, vsSource);
   gl.compileShader(vertexShader);
+  if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+    alert(
+      "An error occurred compiling the shaders : " +
+        gl.getShaderInfoLog(vertexShader)
+    );
+    gl.deleteShader(vertexShader);
+    return;
+  }
   gl.shaderSource(fragmentShader, fsSource);
   gl.compileShader(fragmentShader);
+  if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+    alert(
+      "An error occurred compiling the shaders : " +
+        gl.getShaderInfoLog(fragmentShader)
+    );
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+    return;
+  }
   /*====== Create shader program ======*/
   const program = gl.createProgram();
   if (!program) {
@@ -76,15 +133,23 @@ gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
   /*====== Connect the attribute with the vertex shader =======*/
   // prepare vao (vboのデータに意味をつける)
   const pointsAttributeLocation = gl.getAttribLocation(program, "aPosition");
+  gl.bindBuffer(gl.ARRAY_BUFFER, origBuffer);
   gl.vertexAttribPointer(pointsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(pointsAttributeLocation);
+
+  const colorAttributeLocation = gl.getAttribLocation(program, "aVertexColor");
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(colorAttributeLocation);
   /*========== Drawing ========== */
   /*====== Draw the points to the screen ======*/
   // clear canvas
   gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   // draw
-  gl.drawArrays(gl.TRIANGLES, 0, 12);
+  gl.drawArrays(gl.TRIANGLES, 0, 18);
   // gl.drawArrays(gl.LINE_LOOP, 0, 12);
 };
 
