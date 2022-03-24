@@ -1,3 +1,5 @@
+import { mat4 } from "gl-matrix";
+
 const drawCanvas = () => {
   /*========== Create a WebGL Context ==========*/
   const root = document.getElementById("root") as HTMLDivElement;
@@ -77,10 +79,11 @@ const drawCanvas = () => {
 attribute vec4 aPosition;
 attribute vec4 aVertexColor;
 uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
 varying lowp vec4 vColor;
 
 void main() {
-gl_Position = aPosition;
+gl_Position = uProjectionMatrix * uModelViewMatrix * aPosition;
 vColor = aVertexColor;
 }
 `;
@@ -131,27 +134,79 @@ gl_FragColor = vColor;
   gl.attachShader(program, fragmentShader);
   gl.linkProgram(program);
   gl.useProgram(program);
-  /*====== Connect the attribute with the vertex shader =======*/
-  // prepare vao (vboのデータに意味をつける)
-  const pointsAttributeLocation = gl.getAttribLocation(program, "aPosition");
-  gl.bindBuffer(gl.ARRAY_BUFFER, origBuffer);
-  gl.vertexAttribPointer(pointsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(pointsAttributeLocation);
 
-  const colorAttributeLocation = gl.getAttribLocation(program, "aVertexColor");
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(colorAttributeLocation);
-  /*========== Drawing ========== */
-  /*====== Draw the points to the screen ======*/
-  // clear canvas
-  gl.clearColor(0, 0, 0, 0);
-  gl.enable(gl.DEPTH_TEST);
-  gl.depthFunc(gl.LEQUAL);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  // draw
-  gl.drawArrays(gl.TRIANGLES, 0, 18);
-  // gl.drawArrays(gl.LINE_LOOP, 0, 12);
+  let then = 0.0;
+  let cubeRotation = 0.0;
+  const render = (now: number) => {
+    now *= 0.001;
+    let deltaTime = now - then;
+    then = now;
+    /*====== Connect the attribute with the vertex shader =======*/
+    // prepare vao (vboのデータに意味をつける)
+    const pointsAttributeLocation = gl.getAttribLocation(program, "aPosition");
+    gl.bindBuffer(gl.ARRAY_BUFFER, origBuffer);
+    gl.vertexAttribPointer(pointsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(pointsAttributeLocation);
+
+    const colorAttributeLocation = gl.getAttribLocation(
+      program,
+      "aVertexColor"
+    );
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(colorAttributeLocation);
+
+    /*====== Uniform variables ======*/
+    const modelMatrixLocation = gl.getUniformLocation(
+      program,
+      "uModelViewMatrix"
+    );
+    const modelViewMatrix = mat4.create();
+    mat4.translate(
+      modelViewMatrix, // destination matrix
+      modelViewMatrix, // matrix to translate
+      [0.0, 0.0, -2.0]
+    ); // amount to translate
+    mat4.rotate(
+      modelViewMatrix,
+      modelViewMatrix,
+      cubeRotation,
+      [0.0, 0.0, 1.0]
+    );
+    mat4.rotate(
+      modelViewMatrix,
+      modelViewMatrix,
+      cubeRotation,
+      [0.0, 1.0, 0.0]
+    );
+    gl.uniformMatrix4fv(modelMatrixLocation, false, modelViewMatrix);
+
+    const projMatrixLocation = gl.getUniformLocation(
+      program,
+      "uProjectionMatrix"
+    );
+    const fieldOfView = (45 * Math.PI) / 180; // in radians
+    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    const zNear = 0.1;
+    const zFar = 100.0;
+    const projectionMatrix = mat4.create();
+    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+    gl.uniformMatrix4fv(projMatrixLocation, false, projectionMatrix);
+
+    /*========== Drawing ========== */
+    /*====== Draw the points to the screen ======*/
+    // clear canvas
+    gl.clearColor(0, 0, 0, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // draw
+    gl.drawArrays(gl.TRIANGLES, 0, 18);
+    // gl.drawArrays(gl.LINE_LOOP, 0, 12);
+    cubeRotation += deltaTime;
+    requestAnimationFrame(render);
+  };
+  requestAnimationFrame(render);
 };
 
 drawCanvas();
