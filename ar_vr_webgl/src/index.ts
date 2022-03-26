@@ -235,20 +235,48 @@ const drawCanvasWithThree = () => {
   // GEOMETRY
   const cubeSize = 4;
   const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+  const sphereRadius = 3;
+  const sphereWidthSegments = 32;
+  const sphereHeightSegments = 16;
+  const sphereGeometry = new THREE.SphereGeometry(
+    sphereRadius,
+    sphereWidthSegments,
+    sphereHeightSegments
+  );
   // Create the upright plane
   // Create the cube
-  // Create the Sphere
-  // MATERIALS and TEXTURES
   const cubeMaterial = new THREE.MeshPhongMaterial({ color: "pink" });
   const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  // Create the Sphere
+  const sphereMaterial = new THREE.MeshLambertMaterial({ color: "tan" });
+  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  // MATERIALS and TEXTURES
+  const textureLoader = new THREE.TextureLoader();
+  const planeTextureMap = textureLoader.load("pebbles.jpg");
+  const planeWidth = 256;
+  const planeHeight = 128;
+  const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+  const planeMaterial = new THREE.MeshLambertMaterial({
+    map: planeTextureMap,
+    side: THREE.DoubleSide,
+  });
+  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  plane.rotation.x = Math.PI / 2;
+  scene.add(plane);
+
   cube.position.set(cubeSize + 1, cubeSize + 1, 0);
   scene.add(cube);
+
+  sphere.position.set(-sphereRadius - 1, sphereRadius + 2, 0);
+  scene.add(sphere);
 
   //LIGHTS
   const color = 0xffffff;
   const intensity = 1;
   const light = new THREE.DirectionalLight(color, intensity);
-  scene.add(light); // MESH
+  light.position.set(0, 30, 30);
+  scene.add(light);
   // DRAW
   const draw = () => {
     if (resizeGLToDisplaySize(gl)) {
@@ -259,6 +287,9 @@ const drawCanvasWithThree = () => {
     cube.rotation.x += 0.01;
     cube.rotation.y += 0.01;
     cube.rotation.z += 0.01;
+    sphere.rotation.x += 0.01;
+    sphere.rotation.y += 0.01;
+    sphere.rotation.z += 0.01;
     gl.render(scene, camera);
     requestAnimationFrame(draw);
   };
